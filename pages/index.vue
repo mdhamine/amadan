@@ -1,103 +1,55 @@
+
 <template>
-  <div>
-    <h2>Duration Calculator</h2>
-    <div>
-      <label for="time1">Start Time:</label>
-      <input type="time" v-model="time1" />
-    </div>
-    <div>
-      <label for="time2">End Time:</label>
-      <input type="time" v-model="time2" />
-    </div>
-    <div>
-      <button @click="calculateDuration">Calculate Duration</button>
-    </div>
-    <div v-if="duration">
-      <h3>Results:</h3>
-      <p>Duration: {{ duration.hours }} hours and {{ duration.minutes }} minutes</p>
-      <p>Start Time + 1/3 Duration: {{ fractionTimes.oneThird }}</p>
-      <p>Start Time + 1/2 Duration: {{ fractionTimes.half }}</p>
-      <p>Start Time + 2/3 Duration: {{ fractionTimes.twoThirds }}</p>
-    </div>
+  <div class="p-5">
+    <table class="w-full border-collapse border border-gray-400">
+      <thead>
+        <tr>
+          <th class="border p-2">Day</th>
+          <th v-for="task in 15" :key="task" class="border p-2">Task {{ task }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(day, dayIndex) in tasks" :key="dayIndex">
+          <td class="border p-2">{{ dayIndex + 1 }}</td>
+          <td v-for="(completed, taskIndex) in day" :key="taskIndex" class="border p-2 text-center">
+            <input type="checkbox" v-model="tasks[dayIndex][taskIndex]" @change="toggleTask(dayIndex, taskIndex)" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      time1: "00:00",
-      time2: "00:00",
-      duration: null,
-      fractionTimes: {
-        oneThird: null,
-        half: null,
-        twoThirds: null,
-      },
-    };
-  },
-  methods: {
-    calculateDuration() {
-      const [startHour, startMinute] = this.time1.split(":").map(Number);
-      const [endHour, endMinute] = this.time2.split(":").map(Number);
+<script setup>
+import { ref, onMounted } from 'vue';
 
-      const startInMinutes = startHour * 60 + startMinute;
-      const endInMinutes = endHour * 60 + endMinute;
+const tasks = ref(Array(30).fill(Array(15).fill(false)));
 
-      let diffInMinutes;
-
-      if (endInMinutes >= startInMinutes) {
-        diffInMinutes = endInMinutes - startInMinutes;
-      } else {
-        diffInMinutes = 24 * 60 - startInMinutes + endInMinutes;
-      }
-
-      const hours = Math.floor(diffInMinutes / 60);
-      const minutes = diffInMinutes % 60;
-      this.duration = { hours, minutes };
-
-      this.fractionTimes.oneThird = this.addMinutesToTime(
-        startInMinutes,
-        Math.round(diffInMinutes / 3)
-      );
-      this.fractionTimes.half = this.addMinutesToTime(
-        startInMinutes,
-        Math.round(diffInMinutes / 2)
-      );
-      this.fractionTimes.twoThirds = this.addMinutesToTime(
-        startInMinutes,
-        Math.round((2 * diffInMinutes) / 3)
-      );
-    },
-    addMinutesToTime(startInMinutes, minutesToAdd) {
-      const totalMinutes = (startInMinutes + minutesToAdd) % (24 * 60);
-      const hours = Math.floor(totalMinutes / 60);
-      const minutes = totalMinutes % 60;
-      return this.formatTime(hours, minutes);
-    },
-    formatTime(hours, minutes) {
-      const formattedHours = String(hours).padStart(2, "0");
-      const formattedMinutes = String(minutes).padStart(2, "0");
-      return `${formattedHours}:${formattedMinutes}`;
-    },
-  },
+const fetchTasks = async () => {
+  const { data } = await useFetch('/api/tasks');
+  if (data.value) tasks.value = data.value.days;
 };
+
+const updateTasks = async () => {
+  await useFetch('/api/tasks', {
+    method: 'POST',
+    body: { days: tasks.value }
+  });
+};
+
+const toggleTask = (day, task) => {
+  tasks.value[day][task] = !tasks.value[day][task];
+  updateTasks();
+};
+
+onMounted(fetchTasks);
 </script>
 
-<style scoped>
-h2 {
-  font-family: Arial, sans-serif;
+<style>
+table {
+  border-spacing: 0;
 }
-label {
-  display: block;
-  margin-top: 10px;
-}
-button {
-  margin-top: 10px;
-  padding: 5px 10px;
-}
-p {
-  margin: 5px 0;
+th, td {
+  text-align: center;
 }
 </style>
-
