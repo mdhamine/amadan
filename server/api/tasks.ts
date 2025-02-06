@@ -2,7 +2,7 @@ import { MongoClient } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
-const dbName = 'your_db_name';
+const dbName = 'ramadan';
 
 export default defineEventHandler(async (event) => {
   await client.connect();
