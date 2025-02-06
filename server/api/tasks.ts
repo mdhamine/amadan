@@ -1,19 +1,31 @@
-import { MongoClient } from 'mongodb';
+import { defineEventHandler, getQuery, readBody } from 'h3';
+import TaskProgress from '../../models/TaskProgress';
+import mongoose from 'mongoose';
 
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri);
-const dbName = 'ramadan';
+const MONGO_URI = process.env.MONGODB_URI || 'your_mongodb_connection_string';
+if (!mongoose.connection.readyState) {
+  mongoose.connect(MONGO_URI);
+}
 
+// Fetch all task progress
 export default defineEventHandler(async (event) => {
-  await client.connect();
-  const db = client.db(dbName);
-  const collection = db.collection('tasks');
+  const method = event.node.req.method;
 
-  if (event.req.method === 'GET') {
-    return await collection.findOne({ type: 'tasks' }) || { days: Array(30).fill(Array(15).fill(false)) };
-  } else if (event.req.method === 'POST') {
+  if (method === 'GET') {
+    return await TaskProgress.find({}).sort({ day: 1 });
+  } else if (method === 'POST') {
     const body = await readBody(event);
-    await collection.updateOne({ type: 'tasks' }, { $set: { days: body.days } }, { upsert: true });
-    return { success: true };
+    const { day, tasks } = body;
+
+    let existingEntry = await TaskProgress.findOne({ day });
+    if (existingEntry) {
+      existingEntry.tasks = tasks;
+      await existingEntry.save();
+    } else {
+      existingEntry = new TaskProgress({ day, tasks });
+      await existingEntry.save();
+    }
+
+    return { success: true, data: existingEntry };
   }
 });
