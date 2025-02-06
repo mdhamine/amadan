@@ -1,10 +1,10 @@
 
 <template>
-  <div class="p-5">
+  <div class="p-5 bg-white">
     <table class="w-full border-collapse border border-gray-400">
       <thead>
         <tr>
-          <th class="border p-2">Day</th>
+          <th class="border p-2 border-black">Day</th>
           <th v-for="task in 15" :key="task" class="border p-2">Task {{ task }}</th>
         </tr>
       </thead>
