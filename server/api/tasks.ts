@@ -1,5 +1,5 @@
 import { defineEventHandler, getQuery, readBody } from 'h3';
-import TaskProgress from '../../models/TaskProgress';
+import TaskProgress from '/TaskProgress';
 import mongoose from 'mongoose';
 
 const MONGO_URI = process.env.MONGODB_URI || 'your_mongodb_connection_string';
